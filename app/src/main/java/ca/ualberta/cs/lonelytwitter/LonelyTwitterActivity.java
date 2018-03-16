@@ -1,6 +1,5 @@
 package ca.ualberta.cs.lonelytwitter;
 
-import java.util.Date;
 import java.util.List;
 
 import android.app.Activity;
@@ -16,8 +15,8 @@ public class LonelyTwitterActivity extends Activity {
 	private EditText bodyText;
 	private ListView oldTweetsList;
 
-	private List<NormalLonelyTweet> tweets;
-	private ArrayAdapter<NormalLonelyTweet> adapter;
+	private List<LonelyTweet> tweets;
+	private ArrayAdapter<LonelyTweet> adapter;
 	private TweetsFileManager tweetsProvider;
 
 	@Override
@@ -34,36 +33,53 @@ public class LonelyTwitterActivity extends Activity {
 		super.onStart();
 
 		tweetsProvider = new TweetsFileManager(this);
-		tweets = tweetsProvider.loadTweets();
-		adapter = new ArrayAdapter<NormalLonelyTweet>(this, R.layout.list_item,
-				tweets);
+		setTweets(tweetsProvider.loadTweets());
+		adapter = new ArrayAdapter<LonelyTweet>(this, R.layout.list_item,
+				getTweets());
 		oldTweetsList.setAdapter(adapter);
 	}
 
 	public void save(View v) {
 		String text = bodyText.getText().toString();
 
-		NormalLonelyTweet tweet;
+		LonelyTweet tweet;
 
-		tweet = new NormalLonelyTweet(text, new Date());
+		tweet = new NormalLonelyTweet(text);
 
 		//TODO: use different sub-classes (Normal or Important) based on usage of "*" in the text.
-		
-		if (tweet.isValid()) {
-			tweets.add(tweet);
-			adapter.notifyDataSetChanged();
+		tweet = newImportantOrNormalTweet(text); // refactored --> extract --> method
+//		if (tweet.isValid()) {
+//			getTweets().add(tweet);
+//			adapter.notifyDataSetChanged();
+//
+//			bodyText.setText("");
+//			//tweetsProvider.saveTweets(getTweets());
+//		} else {
+//			Toast.makeText(this, "Invalid tweet", Toast.LENGTH_SHORT).show();
+//		}
+	}
 
-			bodyText.setText("");
-			tweetsProvider.saveTweets(tweets);
+	private LonelyTweet newImportantOrNormalTweet(String text) {
+		LonelyTweet tweet;
+		if (text.contains("*")) {
+			tweet = new ImportantTweet(text);
 		} else {
-			Toast.makeText(this, "Invalid tweet", Toast.LENGTH_SHORT).show();
+			tweet = new NormalLonelyTweet(text);
 		}
+		return tweet;
 	}
 
 	public void clear(View v) {
-		tweets.clear();
+		getTweets().clear();
 		adapter.notifyDataSetChanged();
-		tweetsProvider.saveTweets(tweets);
+		//tweetsProvider.saveTweets(getTweets());
 	}
 
+	public List<LonelyTweet> getTweets() {
+		return tweets;
+	}
+
+	public void setTweets(List<LonelyTweet> tweets) {
+		this.tweets = tweets;
+	}
 }
